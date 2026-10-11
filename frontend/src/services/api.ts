@@ -1,8 +1,19 @@
 import axios from 'axios';
 
-const rawApiUrl = (import.meta.env.VITE_API_URL as string) || 'http://localhost:5000/api';
+const isLocal = typeof window !== 'undefined' && 
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
+const defaultBackendUrl = isLocal 
+  ? 'http://localhost:5000/api' 
+  : 'https://one-punch-man-challenge.onrender.com/api';
+
+const defaultWsUrl = isLocal 
+  ? 'ws://localhost:8000/ws/workout' 
+  : 'wss://opm-challenge-ai-service.onrender.com/ws/workout';
+
+const rawApiUrl = (import.meta.env.VITE_API_URL as string) || defaultBackendUrl;
 export const API_BASE_URL = rawApiUrl.endsWith('/api') ? rawApiUrl : `${rawApiUrl}/api`;
-export const AI_WS_URL = (import.meta.env.VITE_AI_WS_URL as string) || 'ws://localhost:8000/ws/workout';
+export const AI_WS_URL = (import.meta.env.VITE_AI_WS_URL as string) || defaultWsUrl;
 
 export const api = axios.create({
   baseURL: API_BASE_URL,

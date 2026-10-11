@@ -25,28 +25,28 @@ export const Login: React.FC = () => {
         if (res.data.success) {
           login(res.data.token, res.data.user);
           navigate('/');
+        } else {
+          setError(res.data.message || 'Đăng ký không thành công');
         }
       } else {
         const res = await authService.login({ usernameOrEmail: username || email, password });
         if (res.data.success) {
           login(res.data.token, res.data.user);
           navigate('/');
+        } else {
+          setError(res.data.message || 'Đăng nhập không thành công');
         }
       }
     } catch (err: any) {
-      // If backend is not connected yet, allow demo guest login
-      console.warn('Backend login error, activating demo hero login:', err);
-      const mockUser = {
-        id: 99,
-        username: username || 'Hero Saitama',
-        email: email || 'saitama@epu.edu.vn',
-        hero_rank: 'Hero C',
-        level: 1,
-        current_streak: 1,
-      };
-      localStorage.setItem('opm_mock_user', JSON.stringify(mockUser));
-      login('mock-jwt-token-epu', mockUser);
-      navigate('/');
+      console.error('Auth error:', err);
+      const serverMsg = err.response?.data?.message;
+      if (serverMsg) {
+        setError(serverMsg);
+      } else if (err.message && err.message.includes('Network Error')) {
+        setError('Máy chủ Backend đang khởi động lại (Render cold-start), vui lòng đợi 20-30 giây rồi thử lại!');
+      } else {
+        setError('Lỗi đăng nhập: ' + (err.message || 'Kiểm tra kết nối mạng'));
+      }
     } finally {
       setLoading(false);
     }
