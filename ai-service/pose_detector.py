@@ -48,13 +48,26 @@ class PoseDetector:
             min_pose_presence_confidence=0.5,
             min_tracking_confidence=0.5
         )
-        self.landmarker = vision.PoseLandmarker.create_from_options(options)
+        self.landmarker = None
+        self.error_message = None
+        try:
+            self.landmarker = vision.PoseLandmarker.create_from_options(options)
+            print("✅ MediaPipe PoseLandmarker initialized successfully!")
+        except Exception as e:
+            self.error_message = str(e)
+            print(f"⚠️ Warning: Could not initialize MediaPipe PoseLandmarker: {e}")
+            print("👉 Note: If on Render/Linux, please deploy using Dockerfile (libgles2 / libgl1 required).")
+
         self.last_landmarks = None
 
     def find_pose(self, img, draw=True):
         """
         Nhận vào ảnh BGR từ OpenCV, chuyển sang RGB và nhận diện 33 điểm landmarks.
         """
+        if not self.landmarker:
+            self.last_landmarks = None
+            return img, None
+
         rgb_frame = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb_frame)
         

@@ -23,6 +23,17 @@ app.use(cors({
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Root Endpoint
+app.get('/', (req, res) => {
+  res.json({
+    status: 'online',
+    service: 'One Punch Man Challenge Backend API 🥊',
+    version: '1.0.0',
+    health: '/api/health',
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // Health Check
 app.get('/api/health', (req, res) => {
   res.json({

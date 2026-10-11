@@ -60,7 +60,9 @@ def read_root():
     return {
         "status": "online",
         "service": "One Punch Man Challenge - AI Service 🥊",
-        "ml_model_loaded": classifier is not None
+        "ml_model_loaded": classifier is not None,
+        "pose_detector_ready": detector.landmarker is not None,
+        "detector_error": detector.error_message,
     }
 
 @app.get("/api/ai/metrics")
@@ -92,6 +94,14 @@ async def workout_websocket(websocket: WebSocket, exercise_type: str):
             if data == "RESET":
                 counter.reset()
                 await websocket.send_json({"type": "RESET_ACK", "status": counter.get_status()})
+                continue
+
+            if not detector.landmarker:
+                await websocket.send_json({
+                    "detected": False,
+                    "feedback": f"MediaPipe C-library chưa sẵn sàng trên máy chủ: {detector.error_message or 'thiếu libGLESv2.so.2'}. Hãy chuyển sang Docker trên Render.",
+                    "counter": counter.get_status()
+                })
                 continue
 
             # Tách header data:image/jpeg;base64, nếu có
