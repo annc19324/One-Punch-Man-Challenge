@@ -1,0 +1,32 @@
+services:
+  # 1. Node.js Backend API
+  - type: web
+    name: opm-challenge-backend
+    env: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: CLOUDINARY_CLOUD_NAME
+        value: bhwozu3p
+      - key: CLOUDINARY_API_KEY
+        value: "451416761328582"
+      - key: CLOUDINARY_API_SECRET
+        sync: false
+
+  # 2. Python AI Service (FastAPI)
+  - type: web
+    name: opm-challenge-ai-service
+    env: python
+    plan: free
+    rootDir: ai-service
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHONIOENCODING
+        value: utf-8

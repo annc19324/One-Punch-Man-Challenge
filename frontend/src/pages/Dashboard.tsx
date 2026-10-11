@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Camera, Flame, CheckCircle2, Zap, Target } from 'lucide-react';
+import { Camera, Flame, CheckCircle2, Zap, Target, Smartphone, Download } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { challengeService } from '../services/api';
+import { isNativeApp } from '../utils/platform';
+import { DownloadAppModal } from '../components/DownloadAppModal';
 import type { TodayChallengeData } from '../types';
 
 export const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const [data, setData] = useState<TodayChallengeData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
 
   useEffect(() => {
     const fetchChallenge = async () => {
@@ -112,6 +115,33 @@ export const Dashboard: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Mobile App Download Banner: Only visible when accessed on Web browser */}
+      {!isNativeApp() && (
+        <div className="bg-gradient-to-r from-amber-500/10 via-red-500/10 to-transparent border border-amber-500/20 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center space-x-3.5">
+            <div className="w-12 h-12 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 flex-shrink-0">
+              <Smartphone className="w-6 h-6" />
+            </div>
+            <div>
+              <h4 className="text-sm sm:text-base font-bold text-white flex items-center space-x-2">
+                <span>Tập Luyện Di Động Tiện Lợi Hơn Với App Android</span>
+                <span className="text-[10px] bg-amber-500 text-black px-1.5 py-0.5 rounded font-black uppercase">APK</span>
+              </h4>
+              <p className="text-xs text-gray-400 mt-0.5">
+                Cài đặt ứng dụng lên điện thoại để sử dụng GPS chạy bộ và Camera AI mọi lúc mọi nơi mà không lo gián đoạn trình duyệt.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowDownloadModal(true)}
+            className="flex-shrink-0 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-red-600 hover:opacity-90 text-white font-bold text-xs shadow-md shadow-red-500/20 transition-all flex items-center space-x-1.5 cursor-pointer"
+          >
+            <Download className="w-4 h-4" />
+            <span>Tải App Android</span>
+          </button>
+        </div>
+      )}
 
       {/* Main Challenge Dashboard Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -337,6 +367,8 @@ export const Dashboard: React.FC = () => {
           })}
         </div>
       </div>
+
+      <DownloadAppModal isOpen={showDownloadModal} onClose={() => setShowDownloadModal(false)} />
     </div>
   );
 };

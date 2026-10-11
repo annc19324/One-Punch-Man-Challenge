@@ -144,3 +144,63 @@ Mô hình phân loại tư thế được huấn luyện bằng thuật toán **
   - **Accuracy:** `95.51%`
   - **F1-Score bình quân:** `0.96`
   - Báo cáo chi tiết và Confusion Matrix đã được lưu tại: `ai-service/models/evaluation_report.json`
+
+---
+
+## ☁️ 6. Hướng Dẫn Triển Khai Lên Đám Mây (Cloud Deployment)
+
+### 6.1. Triển khai Backend & AI Service lên Render
+Dự án đã có sẵn file [render.yaml](render.yaml) để deploy 1-click hoặc cấu hình bằng tay:
+
+1. **Deploy Backend (Node.js):**
+   - Đăng nhập [Render.com](https://render.com) → Tạo **New Web Service** → Chọn repository GitHub.
+   - **Root Directory:** `backend`
+   - **Build Command:** `npm install`
+   - **Start Command:** `npm start`
+   - **Environment Variables:**
+     - `DATABASE_URL`: URL Neon PostgreSQL của bạn.
+     - `JWT_SECRET`: Khóa bí mật JWT ngẫu nhiên.
+     - `CLOUDINARY_CLOUD_NAME`: `bhwozu3p`
+     - `CLOUDINARY_API_KEY`: `451416761328582`
+     - `CLOUDINARY_API_SECRET`: `eOme6UoFP4KKJycW2wIPsz-cPWE`
+
+2. **Deploy AI Service (Python):**
+   - Tạo **New Web Service** thứ 2 trên Render trỏ cùng repo.
+   - **Root Directory:** `ai-service`
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `uvicorn main:app --host 0.0.0.0 --port $PORT`
+
+---
+
+### 6.2. Triển khai Frontend lên Vercel
+1. Đăng nhập [Vercel.com](https://vercel.com) → Bấm **Add New Project** → Chọn repository GitHub.
+2. **Root Directory:** Chọn thư mục `frontend`.
+3. **Framework Preset:** `Vite` (tự động nhận).
+4. **Environment Variables:**
+   - `VITE_API_URL`: URL của Render Backend (ví dụ: `https://opm-backend.onrender.com/api`).
+   - `VITE_AI_WS_URL`: URL WebSocket của Render AI Service (ví dụ: `wss://opm-ai-service.onrender.com/ws/workout`).
+5. Bấm **Deploy**. File `frontend/vercel.json` đã cấu hình sẵn rewrite định tuyến SPA cho React Router.
+
+---
+
+## 📱 7. Mở Dự Án Trong Android Studio & Xuất File Cài Đặt (APK)
+
+Hệ thống đã tích hợp sẵn **Capacitor** đồng bộ toàn bộ giao diện Web sang mã nguồn Native Android:
+
+1. **Mở dự án trong Android Studio:**
+   - Mở **Android Studio** → Chọn **Open**.
+   - Trỏ trực tiếp đến thư mục:
+     ```text
+     frontend/android
+     ```
+   *(Hoặc chạy lệnh từ terminal: `npm run android:open`)*.
+
+2. **Xuất file APK cài đặt lên điện thoại:**
+   - Đợi Android Studio đồng bộ Gradle xong.
+   - Trên thanh menu của Android Studio: Chọn **Build** → **Build Bundle(s) / APK(s)** → **Build APK(s)**.
+   - Khi hoàn thành, bấm **locate** để lấy file `app-debug.apk` và gửi sang điện thoại cài đặt!
+
+3. **Cơ chế nhận diện Web vs App:**
+   - Khi người dùng truy cập từ **Trình duyệt Web (Chrome, Edge, Safari)**: Hệ thống sẽ tự động hiển thị nút và banner **"📲 Tải App Android"**.
+   - Khi người dùng mở ứng dụng từ **App Android cài trên điện thoại**: Hệ thống tự động nhận diện nền tảng native và **ẩn hoàn toàn nút tải app**.
+

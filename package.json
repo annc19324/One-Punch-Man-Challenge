@@ -7,7 +7,9 @@
     "dev:backend": "cd backend && npm run dev",
     "dev:ai": "cd ai-service && .\\venv\\Scripts\\python main.py",
     "ai:train": "cd ai-service && .\\venv\\Scripts\\python train.py",
-    "ai:cam-test": "cd ai-service && .\\venv\\Scripts\\python main.py --test-cam pushup"
+    "ai:cam-test": "cd ai-service && .\\venv\\Scripts\\python main.py --test-cam pushup",
+    "android:open": "cd frontend && npx cap open android",
+    "android:sync": "cd frontend && npm run build && npx cap sync"
   },
   "keywords": [
     "fitness",

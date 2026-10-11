@@ -1,11 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Flame, Camera, Activity, Trophy, History, LogOut } from 'lucide-react';
+import { Flame, Camera, Activity, Trophy, History, LogOut, Smartphone } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { isNativeApp } from '../utils/platform';
+import { DownloadAppModal } from './DownloadAppModal';
 
 export const Navbar: React.FC = () => {
   const { user, logout } = useAuth();
   const location = useLocation();
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
+  const inApp = isNativeApp();
 
   const navLinks = [
     { to: '/', label: 'Thử Thách', icon: Activity },
@@ -55,8 +59,21 @@ export const Navbar: React.FC = () => {
           })}
         </nav>
 
-        {/* User stats / Hero Rank / Auth */}
+        {/* User stats / Hero Rank / Download App / Auth */}
         <div className="flex items-center space-x-3">
+          {/* Download App Button: Only visible when accessed on Web browser */}
+          {!inApp && (
+            <button
+              onClick={() => setShowDownloadModal(true)}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20 transition-all shadow-sm"
+              title="Cài đặt App Android (APK)"
+            >
+              <Smartphone className="w-3.5 h-3.5 text-amber-400" />
+              <span className="hidden sm:inline">Tải App Android</span>
+              <span className="sm:hidden">App</span>
+            </button>
+          )}
+
           {user ? (
             <div className="flex items-center space-x-3">
               {/* Streak */}
@@ -88,6 +105,7 @@ export const Navbar: React.FC = () => {
           )}
         </div>
       </div>
+      <DownloadAppModal isOpen={showDownloadModal} onClose={() => setShowDownloadModal(false)} />
     </header>
   );
 };

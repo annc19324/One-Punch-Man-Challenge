@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-export const API_BASE_URL = 'http://localhost:5000/api';
-export const AI_WS_URL = 'ws://localhost:8000/ws/workout';
+const rawApiUrl = (import.meta.env.VITE_API_URL as string) || 'http://localhost:5000/api';
+export const API_BASE_URL = rawApiUrl.endsWith('/api') ? rawApiUrl : `${rawApiUrl}/api`;
+export const AI_WS_URL = (import.meta.env.VITE_AI_WS_URL as string) || 'ws://localhost:8000/ws/workout';
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
