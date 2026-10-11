@@ -8,6 +8,7 @@ import challengeRoutes from './routes/challengeRoutes.js';
 import workoutRoutes from './routes/workoutRoutes.js';
 import runningRoutes from './routes/runningRoutes.js';
 import statsRoutes from './routes/statsRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
 
 dotenv.config();
 
@@ -37,6 +38,7 @@ app.use('/api/challenge', challengeRoutes);
 app.use('/api/workouts', workoutRoutes);
 app.use('/api/running', runningRoutes);
 app.use('/api/stats', statsRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // 404 Handler
 app.use((req, res) => {

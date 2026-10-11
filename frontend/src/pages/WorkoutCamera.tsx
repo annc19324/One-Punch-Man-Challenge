@@ -1,7 +1,8 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Camera, RefreshCw, CheckCircle, AlertTriangle, Play, Square, Save, ArrowLeft } from 'lucide-react';
+import { Camera, RefreshCw, CheckCircle, AlertTriangle, Play, Square, Save, ArrowLeft, Volume2, VolumeX, Mic, MicOff } from 'lucide-react';
 import { workoutService, AI_WS_URL } from '../services/api';
+import { soundEffects } from '../services/soundEffects';
 import type { AIWorkoutStatus } from '../types';
 
 export const WorkoutCamera: React.FC = () => {
@@ -24,11 +25,25 @@ export const WorkoutCamera: React.FC = () => {
   const [detected, setDetected] = useState<boolean>(false);
   const [angles, setAngles] = useState<any>(null);
   const [savedSuccess, setSavedSuccess] = useState<boolean>(false);
+  const [isMuted, setIsMuted] = useState<boolean>(soundEffects.isMuted);
+  const [isVoice, setIsVoice] = useState<boolean>(soundEffects.isVoiceEnabled);
 
+  const lastValidRepsRef = useRef<number>(0);
+  const lastInvalidRepsRef = useRef<number>(0);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const frameIntervalRef = useRef<any>(null);
+
+  const toggleMute = () => {
+    soundEffects.isMuted = !soundEffects.isMuted;
+    setIsMuted(soundEffects.isMuted);
+  };
+
+  const toggleVoice = () => {
+    soundEffects.isVoiceEnabled = !soundEffects.isVoiceEnabled;
+    setIsVoice(soundEffects.isVoiceEnabled);
+  };
 
   // Switch exercise
   const handleSelectExercise = (ex: string) => {
@@ -37,6 +52,8 @@ export const WorkoutCamera: React.FC = () => {
     }
     setExercise(ex);
     setSearchParams({ exercise: ex });
+    lastValidRepsRef.current = 0;
+    lastInvalidRepsRef.current = 0;
     setStatus({
       exercise: ex,
       stage: null,
@@ -81,6 +98,14 @@ export const WorkoutCamera: React.FC = () => {
         try {
           const res = JSON.parse(event.data);
           if (res.counter) {
+            if (res.counter.valid_reps > lastValidRepsRef.current) {
+              soundEffects.playRepSuccess(res.counter.valid_reps);
+              lastValidRepsRef.current = res.counter.valid_reps;
+            }
+            if (res.counter.invalid_reps > lastInvalidRepsRef.current) {
+              soundEffects.playFormWarning();
+              lastInvalidRepsRef.current = res.counter.invalid_reps;
+            }
             setStatus(res.counter);
           }
           if (res.detected !== undefined) {
@@ -145,6 +170,8 @@ export const WorkoutCamera: React.FC = () => {
   };
 
   const resetCounter = () => {
+    lastValidRepsRef.current = 0;
+    lastInvalidRepsRef.current = 0;
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send('RESET');
     }
@@ -159,6 +186,7 @@ export const WorkoutCamera: React.FC = () => {
   };
 
   const saveWorkout = async () => {
+    soundEffects.playVictoryFanfare();
     try {
       await workoutService.logResult({
         exercise_type: exercise,
@@ -186,7 +214,7 @@ export const WorkoutCamera: React.FC = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-      {/* Top Bar with Tabs */}
+      {/* Top Bar with Tabs and Audio Controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <button
           onClick={() => navigate('/')}
@@ -196,26 +224,57 @@ export const WorkoutCamera: React.FC = () => {
           <span>Về Thử Thách Chính</span>
         </button>
 
-        {/* Exercise Selector Buttons */}
-        <div className="flex bg-gray-900 p-1.5 rounded-xl border border-gray-800">
-          {[
-            { id: 'pushup', label: 'Chống đẩy (Push-up)', icon: '💪' },
-            { id: 'squat', label: 'Squat', icon: '🏋️' },
-            { id: 'situp', label: 'Gập bụng (Sit-up)', icon: '🔥' },
-          ].map((item) => (
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Exercise Selector Buttons */}
+          <div className="flex bg-gray-900 p-1.5 rounded-xl border border-gray-800">
+            {[
+              { id: 'pushup', label: 'Chống đẩy (Push-up)', icon: '💪' },
+              { id: 'squat', label: 'Squat', icon: '🏋️' },
+              { id: 'situp', label: 'Gập bụng (Sit-up)', icon: '🔥' },
+            ].map((item) => (
+              <button
+                key={item.id}
+                onClick={() => handleSelectExercise(item.id)}
+                className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                  exercise === item.id
+                    ? 'bg-red-600 text-white shadow-md'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+                }`}
+              >
+                <span>{item.icon}</span>
+                <span>{item.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Sound & Voice Coach Controls */}
+          <div className="flex items-center space-x-1.5 bg-gray-900 p-1.5 rounded-xl border border-gray-800">
             <button
-              key={item.id}
-              onClick={() => handleSelectExercise(item.id)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
-                exercise === item.id
-                  ? 'bg-red-600 text-white shadow-md'
-                  : 'text-gray-400 hover:text-white hover:bg-gray-800/50'
+              onClick={toggleMute}
+              className={`flex items-center space-x-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                !isMuted
+                  ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                  : 'text-gray-400 hover:text-white'
               }`}
+              title={isMuted ? 'Bật âm thanh' : 'Tắt âm thanh'}
             >
-              <span>{item.icon}</span>
-              <span>{item.label}</span>
+              {isMuted ? <VolumeX className="w-4 h-4 text-gray-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
+              <span>{isMuted ? 'Mute' : 'Âm thanh'}</span>
             </button>
-          ))}
+
+            <button
+              onClick={toggleVoice}
+              className={`flex items-center space-x-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all ${
+                isVoice
+                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                  : 'text-gray-400 hover:text-white'
+              }`}
+              title={isVoice ? 'Tắt giọng nói HLV' : 'Bật giọng nói HLV'}
+            >
+              {isVoice ? <Mic className="w-4 h-4 text-amber-400" /> : <MicOff className="w-4 h-4 text-gray-400" />}
+              <span>{isVoice ? 'Giọng Đếm' : 'Tắt Giọng'}</span>
+            </button>
+          </div>
         </div>
       </div>
 

@@ -5,16 +5,28 @@ dotenv.config();
 
 const { Pool } = pg;
 
-export const pool = new Pool({
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432', 10),
-  user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'postgres',
-  database: process.env.DB_NAME || 'opm_challenge',
-  max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
-});
+const poolConfig = process.env.DATABASE_URL
+  ? {
+      connectionString: process.env.DATABASE_URL,
+      ssl: {
+        rejectUnauthorized: false,
+      },
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+    }
+  : {
+      host: process.env.DB_HOST || 'localhost',
+      port: parseInt(process.env.DB_PORT || '5432', 10),
+      user: process.env.DB_USER || 'postgres',
+      password: process.env.DB_PASSWORD || 'postgres',
+      database: process.env.DB_NAME || 'opm_challenge',
+      max: 10,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+    };
+
+export const pool = new Pool(poolConfig);
 
 pool.on('error', (err) => {
   console.error('[DB Error] Unexpected error on idle client:', err.message);
@@ -33,12 +45,12 @@ export const query = async (text, params) => {
 export const testConnection = async () => {
   try {
     const client = await pool.connect();
-    console.log('✅ PostgreSQL connected successfully to:', process.env.DB_NAME || 'opm_challenge');
+    const result = await client.query('SELECT current_database() as db_name, current_user as user_name');
+    console.log(`✅ PostgreSQL connected successfully to [${result.rows[0].db_name}] as [${result.rows[0].user_name}]!`);
     client.release();
     return true;
   } catch (error) {
     console.warn('⚠️ Warning: PostgreSQL not reachable yet:', error.message);
-    console.warn('👉 Note: Please check your DB credentials in .env or run PostgreSQL when ready.');
     return false;
   }
 };
