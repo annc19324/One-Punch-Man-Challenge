@@ -11,8 +11,25 @@ const defaultWsUrl = isLocal
   ? 'ws://localhost:8000/ws/workout' 
   : 'wss://opm-challenge-ai-service.onrender.com/ws/workout';
 
-const rawApiUrl = (import.meta.env.VITE_API_URL as string) || defaultBackendUrl;
-export const API_BASE_URL = rawApiUrl.endsWith('/api') ? rawApiUrl : `${rawApiUrl}/api`;
+function cleanApiUrl(raw?: string): string {
+  let u = (raw || '').trim();
+  if (!u) {
+    u = isLocal 
+      ? 'http://localhost:5000/api' 
+      : 'https://one-punch-man-challenge.onrender.com/api';
+  }
+  // Remove trailing slashes
+  u = u.replace(/\/+$/, '');
+  // Normalize double slashes in path (preserving https:// or http://)
+  u = u.replace(/([^:])\/+/g, '$1/');
+  // Ensure it ends with /api exactly once
+  if (!u.endsWith('/api')) {
+    u = `${u}/api`;
+  }
+  return u;
+}
+
+export const API_BASE_URL = cleanApiUrl(import.meta.env.VITE_API_URL as string);
 export const AI_WS_URL = (import.meta.env.VITE_AI_WS_URL as string) || defaultWsUrl;
 
 export const api = axios.create({
@@ -23,6 +40,10 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use((config) => {
+  if (config.url) {
+    // Ensure relative path starts with single / without duplicate slashes
+    config.url = '/' + config.url.replace(/^\/+/, '');
+  }
   const token = localStorage.getItem('opm_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
